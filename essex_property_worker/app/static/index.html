@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Essex County Property Records Lookup</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23162447'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' fill='%23e3b23c' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    --ink: #16233f;
+    --ink-soft: #5b6579;
+    --paper: #f5f3ee;
+    --panel: #ffffff;
+    --border: #e4e1d8;
+    --border-soft: #ece9e1;
+    --accent: #a8721f;
+    --accent-deep: #8a5c15;
+    --accent-soft: #fbf1de;
+    --navy: #16233f;
+    --navy-soft: #eef1f7;
+    --ok: #157a4a;
+    --ok-bg: #eaf7f0;
+    --ok-border: #bfe6d1;
+    --warn: #a15c07;
+    --warn-bg: #fdf3e2;
+    --warn-border: #f3ddab;
+    --err: #b3261e;
+    --err-bg: #fbebea;
+    --err-border: #f2c4c0;
+    --radius: 14px;
+    --radius-sm: 9px;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    background-image: radial-gradient(circle at 10% 0%, #faf8f3 0%, var(--paper) 45%);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 90px;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 26px 0 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  .logo-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--navy);
+    color: var(--accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+  .topbar-text .kicker {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+  }
+  .topbar-text .title {
+    font-family: var(--serif);
+    font-size: 1.18rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 1px;
+  }
+  .topbar-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 3px var(--ok-bg);
+  }
+
+  /* ---------- hero / search ---------- */
+  .hero-kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin-bottom: 10px;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 2.1rem;
+    line-height: 1.18;
+    margin: 0 0 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .hero p {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    line-height: 1.55;
+    margin: 0 0 28px;
+    max-width: 60ch;
+  }
+
+  .search-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 1px 2px rgba(22, 35, 63, 0.04), 0 12px 24px -16px rgba(22, 35, 63, 0.18);
+  }
+  .search-card label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .search-row {
+    display: flex;
+    gap: 10px;
+  }
+  .search-row input[type="text"] {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    font-size: 1rem;
+    padding: 12px 14px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .search-row input[type="text"]:focus {
+    border-color: var(--accent);
+    background: var(--panel);
+  }
+  .search-row button {
+    border: none;
+    background: var(--navy);
+    color: #fff;
+    padding: 0 22px;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .search-row button:hover:not(:disabled) { background: #223257; }
+  .search-row button:disabled { background: #9aa2b1; cursor: not-allowed; }
+
+  .status-line {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    min-height: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ---------- section shell ---------- */
+  .section {
+    margin-top: 28px;
+  }
+  .section-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin-bottom: 6px;
+  }
+  .section h2 {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    margin: 0 0 16px;
+    font-weight: 700;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+
+  .banner {
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-top: 20px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    border: 1px solid;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .banner .dot { margin-top: 6px; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .banner.err { background: var(--err-bg); color: var(--err); border-color: var(--err-border); }
+  .banner.err .dot { background: var(--err); }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+  .banner.warn .dot { background: var(--warn); }
+  .banner.info { background: var(--navy-soft); color: var(--navy); border-color: #d7deec; }
+  .banner.info .dot { background: var(--navy); }
+
+  /* ---------- parcel ---------- */
+  .parcel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  .parcel-grid .field label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .parcel-grid .field .value {
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--serif);
+  }
+
+  /* ---------- stat cards ---------- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 640px) {
+    .stat-grid { grid-template-columns: 1fr; }
+  }
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+  }
+  .stat-value {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 8px;
+    line-height: 1.25;
+  }
+  .stat-sub {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--ok-bg);
+    color: var(--ok);
+    border: 1px solid var(--ok-border);
+  }
+  .status-pill.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ---------- ownership chain ---------- */
+  .chain-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .chain-item {
+    position: relative;
+    display: flex;
+    gap: 16px;
+    padding-bottom: 22px;
+  }
+  .chain-item:last-child { padding-bottom: 0; }
+  .chain-dot-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 14px;
+  }
+  .chain-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 4px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .chain-item.current .chain-dot { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-bg); }
+  .chain-line {
+    flex: 1;
+    width: 2px;
+    background: var(--border);
+    margin-top: 4px;
+  }
+  .chain-body { flex: 1; min-width: 0; padding-bottom: 2px; }
+  .chain-date-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-bottom: 3px;
+    flex-wrap: wrap;
+  }
+  .chain-owner {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.02rem;
+  }
+  .chain-from {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .chain-footnote {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--border-soft);
+    padding-top: 14px;
+  }
+
+  /* ---------- document list ---------- */
+  .doc-list { display: flex; flex-direction: column; gap: 10px; }
+  .doc-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 15px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    transition: border-color 0.15s;
+  }
+  .doc-item:hover { border-color: #d3cebd; }
+  .doc-main { flex: 1; min-width: 0; }
+  .doc-type-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+  }
+  .doc-type {
+    font-weight: 700;
+    font-size: 0.88rem;
+    letter-spacing: 0.02em;
+  }
+  .doc-date { color: var(--ink-soft); font-size: 0.8rem; }
+  .doc-plain { font-size: 0.9rem; margin: 4px 0 0; color: #3c4353; line-height: 1.5; }
+  .doc-parties { margin-top: 6px; }
+  .doc-parties p { font-size: 0.82rem; color: var(--ink-soft); margin: 2px 0; line-height: 1.45; }
+  .doc-parties strong { color: var(--ink); font-weight: 700; }
+  .badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 5px;
+    background: var(--navy-soft);
+    color: var(--navy);
+  }
+  .download-btn {
+    border: 1px solid var(--navy);
+    background: white;
+    color: var(--navy);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .download-btn:hover:not(:disabled) { background: var(--navy-soft); }
+  .download-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .download-btn.done { border-color: var(--ok); color: var(--ok); }
+  .download-btn.error { border-color: var(--err); color: var(--err); }
+
+  .spinner {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- loading skeleton ---------- */
+  .loading-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 22px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .loading-card .spinner { width: 18px; height: 18px; color: var(--accent); }
+  .loading-card .loading-text .t1 { font-weight: 700; font-size: 0.92rem; }
+  .loading-card .loading-text .t2 { font-size: 0.82rem; color: var(--ink-soft); margin-top: 2px; }
+
+  footer {
+    margin-top: 48px;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    text-align: center;
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 22px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo-mark">E</div>
+    <div class="topbar-text">
+      <div class="kicker">Essex County, New Jersey</div>
+      <div class="title">Property Record Lookup</div>
+    </div>
+    <div class="topbar-status"><span class="status-dot"></span>PRESS public records</div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-kicker">Recorded document screening</div>
+    <h1>Start with an address.<br>Get the property history.</h1>
+    <p>Resolve the parcel, search the county index, and review deeds, mortgages, liens, and document images in one place.</p>
+
+    <div class="search-card">
+      <form id="search-form">
+        <label for="address-input">Property address</label>
+        <div class="search-row">
+          <input type="text" id="address-input" placeholder="e.g. 450 Broad St, Newark, NJ" autocomplete="off" required />
+          <button type="submit" id="search-btn"><span id="search-btn-text">Search records</span></button>
+        </div>
+      </form>
+      <div class="status-line" id="status-line"></div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <footer>Data pulled live from the Essex County Register of Deeds &amp; Mortgages (PRESS). Informational only &mdash; not a substitute for a title search.</footer>
+</div>
+
+<script>
+const form = document.getElementById('search-form');
+const input = document.getElementById('address-input');
+const btn = document.getElementById('search-btn');
+const btnText = document.getElementById('search-btn-text');
+const statusLine = document.getElementById('status-line');
+const results = document.getElementById('results');
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function fieldBlock(label, value) {
+  return `<div class="field"><label>${escapeHtml(label)}</label><div class="value">${escapeHtml(value ?? '—')}</div></div>`;
+}
+
+function formatDate(isoDate) {
+  if (!isoDate) return 'unknown date';
+  const [year, month, day] = isoDate.split('-');
+  if (!year || !month || !day) return isoDate;
+  return `${parseInt(month, 10)}/${parseInt(day, 10)}/${year}`;
+}
+
+const STATUS_MESSAGES = {
+  outside_county: { kind: 'err', text: 'This address is outside Essex County, NJ. PRESS only covers Essex County properties.' },
+  address_not_found: { kind: 'err', text: 'This address could not be resolved to a property. Check the spelling and include the city/state.' },
+  no_records_found: { kind: 'warn', text: 'The address resolved to a valid Essex County parcel, but PRESS has no recorded documents for this Block/Lot (common for parcels never sold or mortgaged since PRESS\'s 10/01/1996 cutoff).' },
+  failed: { kind: 'err', text: 'The lookup failed unexpectedly.' },
+};
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const address = input.value.trim();
+  if (!address) return;
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span>';
+  statusLine.innerHTML = '<span class="spinner" style="color: var(--accent);"></span> Resolving address, searching PRESS, and building the summary — this can take 10–30 seconds.';
+  results.innerHTML = `
+    <div class="loading-card">
+      <span class="spinner"></span>
+      <div class="loading-text">
+        <div class="t1">Searching county records</div>
+        <div class="t2">Resolving the parcel and retrieving records&hellip;</div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const resp = await fetch('/lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, download_documents: false }),
+    });
+    const data = await resp.json();
+    renderResult(data);
+  } catch (err) {
+    results.innerHTML = `<div class="banner err"><span class="dot"></span><div>Request failed: ${escapeHtml(err.message)}</div></div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Search records';
+    statusLine.innerHTML = '';
+  }
+});
+
+function renderResult(data) {
+  results.innerHTML = '';
+
+  if (data.parcel) {
+    results.insertAdjacentHTML('beforeend', `
+      <div class="section">
+        <div class="section-eyebrow">Matched property</div>
+        <div class="card">
+          <div class="parcel-grid">
+            ${fieldBlock('Address', data.parcel.normalized_address)}
+            ${fieldBlock('Municipality', data.parcel.municipality)}
+            ${fieldBlock('Block', data.parcel.block)}
+            ${fieldBlock('Lot', data.parcel.lot)}
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  const statusInfo = STATUS_MESSAGES[data.status];
+  if (statusInfo) {
+    results.insertAdjacentHTML('beforeend', `<div class="banner ${statusInfo.kind}"><span class="dot"></span><div>${escapeHtml(statusInfo.text)}</div></div>`);
+  }
+  if (data.status === 'failed' && data.error) {
+    results.insertAdjacentHTML('beforeend', `<div class="banner err"><span class="dot"></span><div><strong>Details:</strong><br>${escapeHtml(data.error)}</div></div>`);
+  }
+
+  if (data.status !== 'completed') {
+    return;
+  }
+
+  const s = data.summary;
+  if (s) {
+    const mortgageOpen = s.active_mortgages.length > 0;
+    const lienOpen = s.active_liens.length > 0;
+
+    results.insertAdjacentHTML('beforeend', `
+      <div class="section">
+        <div class="section-eyebrow">Summary</div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Current owner</div>
+            <div class="stat-value">${escapeHtml(s.current_owner || 'Unknown')}</div>
+            <div class="stat-sub">Based on the most recent indexed deed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Open mortgages</div>
+            <div class="stat-value">${s.active_mortgages.length}</div>
+            <div class="stat-sub">
+              <span class="status-pill ${mortgageOpen ? 'warn' : ''}"><span class="dot"></span>${mortgageOpen ? 'Review' : 'Clear'}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Lien indicators</div>
+            <div class="stat-value">${s.active_liens.length}</div>
+            <div class="stat-sub">
+              <span class="status-pill ${lienOpen ? 'warn' : ''}"><span class="dot"></span>${lienOpen ? 'Review' : 'Clear'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+
+    if (s.ownership_chain && s.ownership_chain.length) {
+      results.insertAdjacentHTML('beforeend', renderOwnershipChain(s.ownership_chain));
+    }
+  }
+
+  if (data.warnings && data.warnings.length) {
+    const items = data.warnings.map(w => `<div>${escapeHtml(w)}</div>`).join('');
+    results.insertAdjacentHTML('beforeend', `<div class="banner warn"><span class="dot"></span><div>${items}</div></div>`);
+  }
+
+  if (data.documents && data.documents.length) {
+    const docsHtml = data.documents.map(doc => renderDocumentItem(doc, data.parcel)).join('');
+    results.insertAdjacentHTML('beforeend', `
+      <div class="section">
+        <div class="section-eyebrow">Recorded history</div>
+        <h2>All documents on this parcel</h2>
+        <div class="card">
+          <div class="doc-list">${docsHtml}</div>
+        </div>
+      </div>
+    `);
+    wireDownloadButtons(data.parcel);
+  }
+}
+
+function renderOwnershipChain(chain) {
+  // chain is newest-first (as returned by the API); render it that way too so
+  // "current owner" reads naturally at the top of the timeline.
+  const items = chain.map((deed, index) => {
+    const isCurrent = index === 0;
+    const grantees = (deed.parties || []).filter(p => p.role === 'grantee').map(p => p.name);
+    const grantors = (deed.parties || []).filter(p => p.role === 'grantor').map(p => p.name);
+    const ownerName = grantees.length ? grantees.join(', ') : 'Unknown owner';
+    const fromText = grantors.length ? `Acquired from ${grantors.join(', ')}` : 'Grantor not recorded';
+    const isLast = index === chain.length - 1;
+
+    return `
+      <div class="chain-item ${isCurrent ? 'current' : ''}">
+        <div class="chain-dot-col">
+          <div class="chain-dot"></div>
+          ${isLast ? '' : '<div class="chain-line"></div>'}
+        </div>
+        <div class="chain-body">
+          <div class="chain-date-row">
+            <span>${escapeHtml(formatDate(deed.recording_date))}</span>
+            <span class="badge">#${escapeHtml(deed.instrument_number || 'n/a')}</span>
+            ${isCurrent ? '<span class="status-pill"><span class="dot"></span>current owner</span>' : ''}
+          </div>
+          <div class="chain-owner">${escapeHtml(ownerName)}</div>
+          <div class="chain-from">${escapeHtml(fromText)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const oldest = chain[chain.length - 1];
+  const oldestDate = oldest ? oldest.recording_date : null;
+  const footnote = oldestDate
+    ? `Showing ${chain.length} recorded deed${chain.length === 1 ? '' : 's'}. Records for this parcel go back to ${escapeHtml(formatDate(oldestDate))} (PRESS itself only carries records from 10/01/1996 onward).`
+    : `Showing ${chain.length} recorded deed${chain.length === 1 ? '' : 's'}.`;
+
+  return `
+    <div class="section">
+      <div class="section-eyebrow">Ownership chain</div>
+      <h2>Deed history</h2>
+      <div class="card">
+        <div class="chain-list">${items}</div>
+        <div class="chain-footnote">${footnote}</div>
+      </div>
+    </div>
+  `;
+}
+
+function formatPartiesByRole(docParties) {
+  const grantors = (docParties || []).filter(p => p.role === 'grantor').map(p => p.name);
+  const grantees = (docParties || []).filter(p => p.role === 'grantee').map(p => p.name);
+  const lines = [];
+  if (grantors.length) {
+    lines.push(`<strong>${grantors.length > 1 ? 'Grantors' : 'Grantor'}:</strong> ${escapeHtml(grantors.join(', '))}`);
+  }
+  if (grantees.length) {
+    lines.push(`<strong>${grantees.length > 1 ? 'Grantees' : 'Grantee'}:</strong> ${escapeHtml(grantees.join(', '))}`);
+  }
+  return lines;
+}
+
+function renderDocumentItem(doc, parcel) {
+  const partyLines = formatPartiesByRole(doc.parties);
+  return `
+    <div class="doc-item" data-instrument="${escapeHtml(doc.instrument_number || '')}" data-doctype="${escapeHtml(doc.document_type)}">
+      <div class="doc-main">
+        <div class="doc-type-row">
+          <span class="doc-type">${escapeHtml(doc.document_type)}</span>
+          <span class="badge">#${escapeHtml(doc.instrument_number || 'n/a')}</span>
+          <span class="doc-date">${escapeHtml(formatDate(doc.recording_date))}</span>
+        </div>
+        <p class="doc-plain">${escapeHtml(doc.plain_english)}</p>
+        ${partyLines.length ? `<div class="doc-parties">${partyLines.map(l => `<p>${l}</p>`).join('')}</div>` : ''}
+      </div>
+      <button class="download-btn" ${doc.instrument_number ? '' : 'disabled'}>Download PDF</button>
+    </div>
+  `;
+}
+
+function wireDownloadButtons(parcel) {
+  document.querySelectorAll('.doc-item').forEach(item => {
+    const btn = item.querySelector('.download-btn');
+    const instrument = item.dataset.instrument;
+    const docType = item.dataset.doctype;
+    if (!instrument) return;
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.classList.remove('done', 'error');
+      btn.innerHTML = '<span class="spinner"></span>Downloading&hellip;';
+
+      const params = new URLSearchParams({
+        municipality: parcel.municipality,
+        block: parcel.block,
+        lot: parcel.lot,
+        instrument_number: instrument,
+        document_type: docType,
+      });
+
+      try {
+        const resp = await fetch(`/documents/download?${params.toString()}`);
+        if (!resp.ok) {
+          const errBody = await resp.json().catch(() => ({}));
+          throw new Error(errBody.detail || `Server returned ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${instrument}_${docType}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        btn.textContent = 'Downloaded';
+        btn.classList.add('done');
+        btn.disabled = false;
+      } catch (err) {
+        btn.textContent = 'Failed — retry';
+        btn.classList.add('error');
+        btn.disabled = false;
+        btn.title = err.message;
+      }
+    });
+  });
+}
+</script>
+</body>
+</html>
